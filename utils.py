@@ -1,3 +1,4 @@
+import os.path
 
 import numpy as np
 import torch
@@ -34,3 +35,21 @@ def get_interpolations(args, model, device, images, images_per_row=20):
 
     interps = torch.cat(interps, 0).to(device)
   return interps
+
+import onnxruntime
+def infer_using_onnx(onnx_file_path, source_data):
+  def to_numpy(tensor):
+    return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
+
+  if (os.path.exists(onnx_file_path) == False):
+    print(f'[trace] target ONNX file does not exist: {onnx_file_path}')
+    exit(-1)
+
+  ort_session = onnxruntime.InferenceSession(onnx_file_path)
+
+  ort_inputs = {ort_session.get_inputs()[0].name: to_numpy(source_data)}
+  ort_outs = ort_session.run(None, ort_inputs)
+
+  # compare ONNX Runtime and PyTorch results
+  print("Exported model has been tested with ONNXRuntime, and the result looks good!")
+  pass

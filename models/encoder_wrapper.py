@@ -2,13 +2,15 @@ import cv2
 import torch
 import torch.utils.data
 import os
+import sys
+sys.path.append('../')
+
 from torch import nn, optim
 from torch.nn import functional as F
 from torchvision import datasets, transforms
 from structures import CNN_Encoder
 from structures import CNN_Decoder
 from data_source import MNIST, EMNIST, FashionMNIST
-import sys
 
 
 class Encoder(object):
@@ -17,6 +19,12 @@ class Encoder(object):
     return None
   def get_model_weight_name(self):
     return ""
+
+  def get_encoder(self):
+    return None
+
+  def get_decoder(self):
+    return None
 
   def _init_dataset(self):
     pass
@@ -52,15 +60,14 @@ class Encoder(object):
     self.model.load_state_dict(torch.load(fullpath))
     self.model.eval()
 
-  def save_to_onnx_file(self, path, device):
+  def _save_to_onnx_file(self, fullpath, device, target_model):
 
-    fullpath = '/'.join([path, self.model_onnx_name])
     channel = 1
     batch_size = 1
     input_shape = (channel, self.image_width, self.image_height)
     model_input = torch.randn(batch_size, *input_shape, requires_grad=True)
     model_input = model_input.to(device)
-    torch.onnx.export(self.model,  # model being run
+    torch.onnx.export(target_model,  # model being run
                       model_input,  # model input (or a tuple for multiple inputs)
                       fullpath,  # where to save the model (can be a file or file-like object)
                       export_params=True,  # store the trained parameter weights inside the model file
@@ -70,9 +77,21 @@ class Encoder(object):
                       output_names=['output'],  # the model's output names
                       dynamic_axes={'input': {0: 'batch_size'},  # variable length axes
                                     'output': {0: 'batch_size'}})
-
     pass
 
+  def save_both_to_onnx_file(self, path, device):
+
+    fullpath = '/'.join([path, self.model_onnx_name])
+    self._save_to_onnx_file(fullpath, device, self.get_model())
+    pass
+
+  def save_encoder_to_onnx_file(self, path, device):
+
+    encoder_name = '.'.join([self.model_onnx_name, 'encoder_part'])
+    fullpath = '/'.join([path, encoder_name])
+    print(f'[trace] save_encoder_to_onnx_file to loc:{fullpath}')
+    self._save_to_onnx_file(fullpath, device, self.get_encoder())
+    pass
 
   def infer(self, path, device):
     img = cv2.imread(path, cv2.IMREAD_COLOR)

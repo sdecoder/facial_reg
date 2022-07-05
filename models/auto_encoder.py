@@ -37,6 +37,12 @@ class Network(nn.Module):
     z = self.encode(x.view(-1, 784))
     return self.decode(z)
 
+  def get_encoder(self):
+    return self.encoder
+
+  def get_decoder(self):
+    return self.decoder
+
 class AE(Encoder):
 
   def __init__(self, args):
@@ -65,6 +71,12 @@ class AE(Encoder):
 
   def get_model_weight_name(self):
     return self.model_weight_name
+
+  def get_encoder(self):
+    return self.model.get_encoder()
+
+  def get_decoder(self):
+    return self.model.get_decoder()
 
   def _init_dataset(self):
     if self.args.dataset == 'MNIST':

@@ -19,10 +19,11 @@ class Network(nn.Module):
   def __init__(self, args):
     super(Network, self).__init__()
     output_size = 512
-    self.encoder = CNN_Encoder(output_size)
+
     self.var = nn.Linear(output_size, args.embedding_size)
     self.mu = nn.Linear(output_size, args.embedding_size)
 
+    self.encoder = CNN_Encoder(output_size)
     self.decoder = CNN_Decoder(args.embedding_size)
 
   def encode(self, x):
@@ -42,6 +43,11 @@ class Network(nn.Module):
     z = self.reparameterize(mu, logvar)
     return self.decode(z), mu, logvar
 
+  def get_encoder(self):
+    return self.encoder
+
+  def get_decoder(self):
+    return self.decoder
 
 class VAE(Encoder):
 
@@ -68,6 +74,12 @@ class VAE(Encoder):
 
   def get_model_weight_name(self):
     return self.model_weight_name
+
+  def get_encoder(self):
+    return self.model.get_encoder()
+
+  def get_decoder(self):
+    return self.model.get_decoder()
 
   def _init_dataset(self):
     if self.args.dataset == 'MNIST':

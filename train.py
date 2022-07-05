@@ -92,4 +92,5 @@ if __name__ == "__main__":
   print('[trace] run@main start to save the ONNX models')
   onnx_path = './trained/onnx'
   device = torch.device("cuda" if args.cuda else "cpu")
-  autoenc.save_to_onnx_file(onnx_path, device)
+  #autoenc.save_both_to_onnx_file(onnx_path, device)
+  autoenc.save_encoder_to_onnx_file(onnx_path, device)
