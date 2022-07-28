@@ -41,7 +41,7 @@ def main():
   args.cuda = not args.no_cuda and torch.cuda.is_available()
   device = torch.device("cuda" if args.cuda else "cpu")
 
-  input_image_path = '../results/one.png'
+  input_image_path = '../results/AlbertEinstein.jpeg'
   if (os.path.exists(input_image_path) == False):
     print(f'[trace] target file {input_image_path} does not exist, exit')
     exit(-1)
@@ -61,7 +61,7 @@ def main():
   '''
 
   #trt_engine_path = '../trained/engine/auto_encoder.engine'
-  trt_engine_path = '../trained/engine/auto_encoder_encoder_part.engine'
+  trt_engine_path = '../trained/engine/arcface-resnet100.engine'
 
   if (os.path.exists(trt_engine_path) == False):
     print(f'[trace] engine file {trt_engine_path} does not exist, exit')
@@ -70,8 +70,9 @@ def main():
   print('[trace] initiating TensorRT object')
   trtObject = TRTInference(trt_engine_path)
   result = trtObject.infer(input_image_path)
-  print(f'[trace] the result type: {type(result)}')
-  print(f'[trace] the result: {result}')
+  print(f'[trace] the result type: {type(result[0])}')
+  print(f'[trace] the result length: {len(result[0])}')
+  print(f'[trace] the result: {result[0]}')
   print('[trace] initilization done')
 
   pass
@@ -143,9 +144,9 @@ class TRTInference(object):
     print("[trace] TensorRT engine: execution context created.")
     # Allocate memory for multiple usage [e.g. multiple batch inference]
     batch_size = 1
-    channel = 1
-    width = 28
-    height = 28
+    channel = 3
+    width = 112
+    height = width
     INPUT_SHAPE = (channel, width, height)
 
     input_volume = trt.volume(INPUT_SHAPE)
@@ -282,6 +283,19 @@ class TRTInference(object):
     return img_np
 
   def _load_img(self, image_path):
+
+    image_width = 112
+    image_height = 112
+    img = cv2.imread(image_path, cv2.IMREAD_COLOR)
+    dim = (image_width, image_height)  # resize im
+    resized_image = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+    resized_image_tensor = torch.from_numpy(resized_image)
+    resized_image_tensor = resized_image_tensor.float()
+    resized_image_tensor = resized_image_tensor.view(1, -1, image_width, image_height)
+    print(f'[trace] resized_image_tensor.size(): {resized_image_tensor.size()}')
+    #using arcface-resnet100.engine as the inference engine
+
+    return resized_image_tensor
 
     image_width = 28
     image_height = 28

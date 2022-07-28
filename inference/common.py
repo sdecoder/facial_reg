@@ -60,11 +60,14 @@ def allocate_buffers(engine):
   bindings = []
   stream = cuda.Stream()
 
+  input_key = 'data'
+  output_key = 'fc1'
+
   # Current NMS implementation in TRT only supports DataType.FLOAT but
   # it may change in the future, which could brake this sample here
   # when using lower precision [e.g. NMS output would not be np.float32
   # anymore, even though this is assumed in binding_to_type]
-  binding_to_type = {"input": np.float32, "output": np.float32}
+  binding_to_type = {input_key: np.float32, output_key: np.float32}
 
   for binding in engine:
     print(f'[trace] current binding: {str(binding)}')
